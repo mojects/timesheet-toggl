@@ -52,7 +52,7 @@ module Timesheet
       }
       first_page = fetch(params, 1)
       push(first_page)
-      pages = first_page['total_count'] / first_page['per_page']
+      pages = first_page[:total_count] / first_page[:per_page]
       pages.times { |page| sync(params, page + 2) }
     end
 
@@ -88,8 +88,10 @@ module Timesheet
     end
 
     def push_record(record)
-      TimeEntry.create_with(derive_params(record)).find_or_create_by(
-        external_id: record[:id], data_source_id: CONFIG[:source_id])
+      TimeEntry.transaction do
+        TimeEntry.create_with(derive_params(record)).find_or_create_by(
+          external_id: record[:id], data_source_id: CONFIG[:source_id])
+      end
     end
 
     def derive_params(record)
@@ -100,11 +102,19 @@ module Timesheet
       params[:data_source_id] = CONFIG[:source_id]
       params[:spent_on] = record[:start].to_date
       params[:hours] /= 3_600_000.0 # turn milliseconds into hours
-      params[:client_id] = Client.find_by(name: record[:client]).id
-      params[:user_id] = DataSourceUser.find_by(
-        data_source_id: CONFIG[:source_id], external_user_id: record[:uid]).
-        user_id
-      pp params
+      if client = Client.find_by(name: record[:client])
+        params[:client_id] = client.id
+      else
+        Rails.logger.error "No client match to toggl client #{record[:client]}"
+      end
+      data_source_user = DataSourceUser.find_by(
+        data_source_id: CONFIG[:source_id], external_user_id: record[:uid])
+      if data_source_user
+        params[:user_id] = data_source_user.user_id
+      else
+        Rails.logger.error "No user match to toggl user #{record[:user]} (id #{record[:id]})"
+      end
+      params
     end
 
     def params_map
