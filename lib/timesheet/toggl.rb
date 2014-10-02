@@ -1,4 +1,5 @@
 require_relative 'toggl/version'
+require_relative 'toggl/railtie' if defined?(Rails)
 require 'curb'
 require 'active_support/core_ext/time'
 require 'active_support/core_ext/date'
