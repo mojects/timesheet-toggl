@@ -8,9 +8,8 @@ Gem::Specification.new do |spec|
   spec.version       = Timesheet::Toggl::VERSION
   spec.authors       = ["Sergey Smagin"]
   spec.email         = ["smaginsergey1310@gmail.com"]
-  spec.summary       = %q{TODO: Write a short summary. Required.}
-  spec.description   = %q{TODO: Write a longer description. Optional.}
-  spec.homepage      = ""
+  spec.summary       = %q{Toggl integration for timesheet}
+  spec.homepage      = "https://github.com/s-mage/timesheet-toggl"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files -z`.split("\x0")
@@ -20,4 +19,7 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency "bundler", "~> 1.7"
   spec.add_development_dependency "rake", "~> 10.0"
+
+  spec.add_dependency 'curb'
+  spec.add_dependency 'active_support'
 end
