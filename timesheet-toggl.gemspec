@@ -21,5 +21,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake", "~> 10.0"
 
   spec.add_dependency 'curb'
-  spec.add_dependency 'active_support'
+  spec.add_dependency 'activesupport'
 end

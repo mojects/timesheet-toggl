@@ -1,4 +1,4 @@
-module TimeEntryConnector::Generators
+module Timesheet::Toggl::Generators
   class InstallGenerator < ::Rails::Generators::Base
     desc 'Generates a custom config in config/connectors/toggl.yml'
 

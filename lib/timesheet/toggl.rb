@@ -15,15 +15,6 @@ module Timesheet
   #
   module Toggl
     BASE_URI = 'https://toggl.com/reports/api/v2/details'
-    PARAMS_MAP = {
-      data_source_id: CONFIG[:source_id],
-      external_id: :id,
-      project: :project,
-      comment: :description,
-      hours: :dur,
-      start_time: :start,
-      finish_time: :end
-    }
 
     # Example of config:
     #   api_token: 1971800d4d82861d8f2c1651fea4d212
@@ -84,7 +75,7 @@ module Timesheet
         request.username = CONFIG[:api_token]
         request.password = 'api_token'
       end
-      parsed = JSON.load(response.body)
+      parsed = JSON.parse(response.body, symbolize_names: true)
       fail "Request failed: #{parsed}" unless response.response_code == 200
       parsed
     end
@@ -93,25 +84,38 @@ module Timesheet
     # @param parsed_response [Hash] resulf of fetch
     #
     def push(parsed_response)
-      parsed_response['data'].each { |x| push_record x }
+      parsed_response[:data].each { |x| push_record x }
     end
 
     def push_record(record)
-      TimeEntry.create_with(params).find_or_create_by(
+      TimeEntry.create_with(derive_params(record)).find_or_create_by(
         external_id: record[:id], data_source_id: CONFIG[:source_id])
     end
 
     def derive_params(record)
       params = record.reduce({}) do |r, (k, v)|
-        next(r) unless PARAMS_MAP[k]
-        r.merge(PARAMS_MAP[k] => v)
+        next(r) unless params_map[k]
+        r.merge(params_map[k] => v)
       end
+      params[:data_source_id] = CONFIG[:source_id]
       params[:spent_on] = record[:start].to_date
       params[:hours] /= 3_600_000.0 # turn milliseconds into hours
-      params[:client_id] = Client.find(record[:client]).id
+      params[:client_id] = Client.find_by(name: record[:client]).id
       params[:user_id] = DataSourceUser.find_by(
         data_source_id: CONFIG[:source_id], external_user_id: record[:uid]).
         user_id
+      pp params
+    end
+
+    def params_map
+    {
+      id: :external_id,
+      project: :project,
+      description: :comment,
+      dur: :hours,
+      start: :start_time,
+      end: :finish_time
+    }
     end
 
     extend self
