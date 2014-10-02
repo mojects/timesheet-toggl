@@ -112,7 +112,7 @@ module Timesheet
       if data_source_user
         params[:user_id] = data_source_user.user_id
       else
-        Rails.logger.error "No user match to toggl user #{record[:user]} (id #{record[:id]})"
+        Rails.logger.error "No user match to toggl user #{record[:user]} (id #{record[:uid]})"
       end
       params
     end
