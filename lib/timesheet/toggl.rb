@@ -1,4 +1,4 @@
-require_relative "toggl/version"
+require_relative 'toggl/version'
 require 'curb'
 require 'active_support/core_ext/time'
 require 'active_support/core_ext/date'
@@ -6,8 +6,23 @@ require 'json'
 require 'pp'
 
 module Timesheet
+  # Export reports from timesheet to toggle.
+  # @example
+  #   Timesheet::Toggl.sync_last_month
+  #   Timesheet::Toggl.sync_last_month([14, 88]) # where 14, 88 -- user ids.
+  #   Timesheet::Toggl.sync(from: (Date.today - 1.month), to: Date.today)
+  #
   module Toggl
     BASE_URI = 'https://toggl.com/reports/api/v2/details'
+    PARAMS_MAP = {
+      data_source_id: CONFIG[:source_id],
+      external_id: :id,
+      project: :project,
+      comment: :description,
+      hours: :dur,
+      start_time: :start,
+      finish_time: :end
+    }
 
     # Example of config:
     #   api_token: 1971800d4d82861d8f2c1651fea4d212
@@ -17,9 +32,9 @@ module Timesheet
     def configure(hash)
       self.const_set :CONFIG, hash
       name = hash[:source_name]
-     # src = DataSource.create_with(name: name).
-     #   find_or_create_by(config_section_id: name, connector_type: 'toggl')
-     # CONFIG[:source_id] = src.id
+      src = DataSource.create_with(name: name).
+        find_or_create_by(config_section_id: name, connector_type: 'toggl')
+      CONFIG[:source_id] = src.id
     end
 
     def sync_last_month(user_ids = [])
@@ -56,6 +71,11 @@ module Timesheet
       push(data)
     end
 
+    # Get data from toggl.
+    # @param params [Hash] query params for api.
+    # @param page [Integer] number of page.
+    # @returns [Hash] parsed response from toggl.
+    #
     def fetch(params, page)
       print "page #{page}: "
       response = Curl.get(BASE_URI, params.merge(page: page)) do |request|
@@ -64,34 +84,33 @@ module Timesheet
         request.password = 'api_token'
       end
       parsed = JSON.load(response.body)
-      raise "Request failed: #{parsed}" unless response.response_code == 200
+      fail "Request failed: #{parsed}" unless response.response_code == 200
       parsed
     end
 
+    # Push data to timesheet.
+    # @param parsed_response [Hash] resulf of fetch
+    #
     def push(parsed_response)
-      pp parsed_response['data'].map { |x| [x['uid'], x['user']] }
-      # TODO: move bunch of queries to timesheet.
-      # external_id, comment, user_id, task, project, client_id, hours, start_time, finish_time
+      parsed_response['data'].each { |x| push_record x }
     end
 
     def push_record(record)
-      params_map = {
-        source_id: CONFIG[:source_id],
-        external_id: :id,
-        external_project_id: :pid,
-        external_project_name: :project,
-        external_user_id: :uid,
-        external_user_name: :user,
-        comment: :description,
-        hours: :dur,
-        start_time: :start,
-        finish_time: :end
-      }
-      params = record.inject({}) do |r, (k, v)|
-        next(r) unless params_map[k]; r.merge(params_map[k] => v)
-      end
       TimeEntry.create_with(params).find_or_create_by(
         external_id: record[:id], data_source_id: CONFIG[:source_id])
+    end
+
+    def derive_params(record)
+      params = record.reduce({}) do |r, (k, v)|
+        next(r) unless PARAMS_MAP[k]
+        r.merge(PARAMS_MAP[k] => v)
+      end
+      params[:spent_on] = record[:start].to_date
+      params[:hours] /= 3_600_000.0 # turn milliseconds into hours
+      params[:client_id] = Client.find(record[:client]).id
+      params[:user_id] = DataSourceUser.find_by(
+        data_source_id: CONFIG[:source_id], external_user_id: record[:uid]).
+        user_id
     end
 
     extend self
