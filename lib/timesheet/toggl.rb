@@ -84,14 +84,19 @@ module Timesheet
     # @param parsed_response [Hash] resulf of fetch
     #
     def push(parsed_response)
-      parsed_response[:data].each { |x| push_record x }
+      TimeEntry.transaction do
+        parsed_response[:data].each { |x| push_record x }
+      end
     end
 
+    # Push single record to database.
+    # Don't push time entry if no user set.
+    #
     def push_record(record)
-      TimeEntry.transaction do
-        TimeEntry.create_with(derive_params(record)).find_or_create_by(
-          external_id: record[:id], data_source_id: CONFIG[:source_id])
-      end
+      params = derive_params(record)
+      return unless params[:user_id]
+      TimeEntry.create_with(params).find_or_create_by(
+        external_id: record[:id], data_source_id: CONFIG[:source_id])
     end
 
     def derive_params(record)
