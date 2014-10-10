@@ -95,8 +95,9 @@ module Timesheet
     def push_record(record)
       params = derive_params(record)
       return unless params[:user_id]
-      TimeEntry.create_with(params).find_or_create_by(
+      te = TimeEntry.find_or_create_by(
         external_id: record[:id], data_source_id: CONFIG[:source_id])
+      te.update params
     end
 
     def derive_params(record)
@@ -117,20 +118,21 @@ module Timesheet
       if data_source_user
         params[:user_id] = data_source_user.user_id
       else
-        Rails.logger.error "No user match to toggl user #{record[:user]} (id #{record[:uid]})"
+        Rails.logger.error "No user match to toggl user
+          #{record[:user]} (id #{record[:uid]})"
       end
       params
     end
 
     def params_map
-    {
-      id: :external_id,
-      project: :project,
-      description: :comment,
-      dur: :hours,
-      start: :start_time,
-      end: :finish_time
-    }
+      {
+        id: :external_id,
+        project: :project,
+        description: :comment,
+        dur: :hours,
+        start: :start_time,
+        end: :finish_time
+      }
     end
 
     extend self
