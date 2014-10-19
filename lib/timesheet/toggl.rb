@@ -20,9 +20,13 @@ module Timesheet
     #   api_token: 1971800d4d82861d8f2c1651fea4d212
     #   worspace_id: 123
     #   source_name: 'toggl'
+    #   redmine_time_entry_class: 'TimeEntryRedmine' # optional
     #
     def configure(hash)
       self.const_set :CONFIG, hash
+      if defined? Rails
+        CONFIG[:redmine_time_entry_class] ||= TimeEntryConnector.descendants.first
+      end
       name = hash[:source_name]
       src = DataSource.create_with(name: name).
         find_or_create_by(config_section_id: name, connector_type: 'toggl')
@@ -108,10 +112,18 @@ module Timesheet
       params[:data_source_id] = CONFIG[:source_id]
       params[:spent_on] = record[:start].to_date
       params[:hours] /= 3_600_000.0 # turn milliseconds into hours
-      if client = Client.find_by(name: record[:client])
-        params[:client_id] = client.id
-      else
-        Rails.logger.error "No client match to toggl client #{record[:client]}"
+      if CONFIG[:redmine_time_entry_class]
+        if issue_id = params[:comment].match(/\#(\d+)/)[1]
+          params[:client_id] = Kernel.const_get(CONFIG[:redmine_time_entry_class])
+            .client_id(issue_id)
+        end
+      end
+      unless params[:client_id]
+        if client = Client.find_by(name: record[:client])
+          params[:client_id] = client.id
+        else
+          Rails.logger.error "No client match to toggl client #{record[:client]}"
+        end
       end
       data_source_user = DataSourceUser.find_by(
         data_source_id: CONFIG[:source_id], external_user_id: record[:uid])
