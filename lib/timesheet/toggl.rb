@@ -1,5 +1,4 @@
 require_relative 'toggl/version'
-require_relative 'toggl/railtie' if defined?(Rails)
 require 'curb'
 require 'active_support/core_ext/time'
 require 'active_support/core_ext/date'
@@ -9,11 +8,13 @@ require 'pp'
 module Timesheet
   # Export reports from timesheet to toggle.
   # @example
-  #   Timesheet::Toggl.sync_last_month
-  #   Timesheet::Toggl.sync_last_month([14, 88]) # where 14, 88 -- user ids.
-  #   Timesheet::Toggl.sync(from: (Date.today - 1.month), to: Date.today)
+  #   Timesheet::Toggl.new(config).sync_last_month
+  #   Timesheet::Toggl.new(config).sync_last_month([14, 88]) # where 14, 88 -- user ids.
+  #   Timesheet::Toggl.new(config).sync(from: (Date.today - 1.month), to: Date.today)
   #
-  module Toggl
+  class Toggl
+    attr_accessor :config
+
     BASE_URI = 'https://toggl.com/reports/api/v2/details'
 
     # Example of config:
@@ -22,15 +23,12 @@ module Timesheet
     #   source_name: 'toggl'
     #   redmine_time_entry_class: 'TimeEntryRedmine' # optional
     #
-    def configure(hash)
-      self.const_set :CONFIG, hash
-      if defined? Rails
-        CONFIG[:redmine_time_entry_class] ||= TimeEntryConnector.descendants.first
-      end
+    def initialize(hash)
+      @config = hash
       name = hash[:source_name]
       src = DataSource.create_with(name: name).
         find_or_create_by(config_section_id: name, connector_type: 'toggl')
-      CONFIG[:source_id] = src.id
+      @config[:source_id] = src.id
     end
 
     def sync_last_month(user_ids = [])
@@ -48,7 +46,7 @@ module Timesheet
     #
     def synchronize(from, to, user_ids = [])
       params = {
-        workspace_id: CONFIG[:workspace_id],
+        workspace_id: config[:workspace_id],
         since: from.to_s,
         until: to.to_s,
         user_agent: 'export_to_timesheet',
@@ -76,7 +74,7 @@ module Timesheet
       print "page #{page}: "
       response = Curl.get(BASE_URI, params.merge(page: page)) do |request|
         request.http_auth_types = :basic
-        request.username = CONFIG[:api_token]
+        request.username = config[:api_token]
         request.password = 'api_token'
       end
       parsed = JSON.parse(response.body, symbolize_names: true)
@@ -100,7 +98,7 @@ module Timesheet
       params = derive_params(record)
       return unless params[:user_id]
       te = TimeEntry.find_or_create_by(
-        external_id: record[:id], data_source_id: CONFIG[:source_id])
+        external_id: record[:id], data_source_id: config[:source_id])
       te.update params
     end
 
@@ -109,12 +107,12 @@ module Timesheet
         next(r) unless params_map[k]
         r.merge(params_map[k] => v)
       end
-      params[:data_source_id] = CONFIG[:source_id]
+      params[:data_source_id] = config[:source_id]
       params[:spent_on] = record[:start].to_date
       params[:hours] /= 3_600_000.0 # turn milliseconds into hours
-      if CONFIG[:redmine_time_entry_class]
+      if config[:redmine_time_entry_class]
         if issue_id = params[:comment].match(/\#(\d+)/)[1]
-          params[:client_id] = Kernel.const_get(CONFIG[:redmine_time_entry_class])
+          params[:client_id] = Kernel.const_get(config[:redmine_time_entry_class])
             .client_id(issue_id)
         end
       end
@@ -126,7 +124,7 @@ module Timesheet
         end
       end
       data_source_user = DataSourceUser.find_by(
-        data_source_id: CONFIG[:source_id], external_user_id: record[:uid])
+        data_source_id: config[:source_id], external_user_id: record[:uid])
       if data_source_user
         params[:user_id] = data_source_user.user_id
       else
