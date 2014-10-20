@@ -49,9 +49,9 @@ module Timesheet
         workspace_id: config[:workspace_id],
         since: from.to_s,
         until: to.to_s,
-        user_agent: 'export_to_timesheet',
-        user_ids: user_ids.join(',')
+        user_agent: 'export_to_timesheet'
       }
+      params[:user_ids] = user_ids.join(',') unless user_ids.empty?
       first_page = fetch(params, 1)
       push(first_page)
       pages = first_page[:total_count] / first_page[:per_page]
