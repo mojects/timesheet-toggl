@@ -144,7 +144,5 @@ module Timesheet
         end: :finish_time
       }
     end
-
-    extend self
   end
 end
