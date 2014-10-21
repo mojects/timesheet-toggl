@@ -111,7 +111,7 @@ module Timesheet
       params[:spent_on] = record[:start].to_date
       params[:hours] /= 3_600_000.0 # turn milliseconds into hours
       if config[:redmine_time_entry_class]
-        if issue_id = params[:comment].match(/\#(\d+)/)[1]
+        if issue_id = params[:comment].match(/\#(\d+)/).try(:[], 1)
           params[:client_id] = Kernel.const_get(config[:redmine_time_entry_class])
             .client_id(issue_id)
         end
