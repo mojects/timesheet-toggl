@@ -13,7 +13,7 @@ module Timesheet
       headers['Content-Type']='application/json'
       headers['X-Requested-With']='XMLHttpRequest'
       headers['Accept']='application/json'
-      response = Curl::Easy.http_post(CLIENTS_URI, params) do |request|
+      response = Curl::Easy.http_post(CLIENTS_URI, params.to_json) do |request|
         request.http_auth_types = :basic
         request.username = config[:api_token]
         request.password = 'api_token'
