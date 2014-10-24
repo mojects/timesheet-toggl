@@ -20,7 +20,6 @@ module Timesheet
       request.username = config[:api_token]
       request.password = 'api_token'
       response = request.http_post params.to_json
-      end
       unless response.response_code == 200
         Rails.logger.error "Project creation failed: #{response.body}"
       end
