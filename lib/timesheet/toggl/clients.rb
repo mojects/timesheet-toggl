@@ -9,11 +9,16 @@ module Timesheet
           wid: workspace_id,
         }
       }
-      response = Curl.post(Curl.urlalize(CLIENTS_URI, params)) do |request|
-        request.http_auth_types = :basic
-        request.username = config[:api_token]
-        request.password = 'api_token'
-      end
+      headers = {}
+      headers['Content-Type']='application/json'
+      headers['X-Requested-With']='XMLHttpRequest'
+      headers['Accept']='application/json'
+      request = Curl::Easy.new
+      request.url = CLIENTS_URI
+      request.http_auth_types = :basic
+      request.username = config[:api_token]
+      request.password = 'api_token'
+      response = request.http_post params.to_json
       if response.response_code == 200
         JSON.parse(response.body, symbolize_names: true)[:data][:id]
       else

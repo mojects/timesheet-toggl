@@ -10,10 +10,16 @@ module Timesheet
           cid: client_id
         }
       }
-      response = Curl.post(Curl.urlalize(PROJECTS_URI, params)) do |request|
-        request.http_auth_types = :basic
-        request.username = config[:api_token]
-        request.password = 'api_token'
+      headers = {}
+      headers['Content-Type']='application/json'
+      headers['X-Requested-With']='XMLHttpRequest'
+      headers['Accept']='application/json'
+      request = Curl::Easy.new
+      request.url = PROJECTS_URI
+      request.http_auth_types = :basic
+      request.username = config[:api_token]
+      request.password = 'api_token'
+      response = request.http_post params.to_json
       end
       unless response.response_code == 200
         Rails.logger.error "Project creation failed: #{response.body}"
