@@ -13,6 +13,9 @@ module Timesheet
   #   Timesheet::Toggl.new(config).sync(from: (Date.today - 1.month), to: Date.today)
   #
   class Toggl
+    include Clients
+    include Projects
+
     attr_accessor :config
 
     BASE_URI = 'https://toggl.com/reports/api/v2/details'
