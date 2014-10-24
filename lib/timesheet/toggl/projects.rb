@@ -10,7 +10,7 @@ module Timesheet
           cid: client_id
         }
       }
-      response = Curl.post(PROJECTS_URI, params) do |request|
+      response = Curl.post(Curl.urlalize(PROJECTS_URI, params)) do |request|
         request.http_auth_types = :basic
         request.username = config[:api_token]
         request.password = 'api_token'
