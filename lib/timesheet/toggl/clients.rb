@@ -9,7 +9,7 @@ module Timesheet
           wid: workspace_id,
         }
       }
-      response = Curl.post(PROJECTS_URI, params) do |request|
+      response = Curl.post(CLIENTS_URI, params) do |request|
         request.http_auth_types = :basic
         request.username = config[:api_token]
         request.password = 'api_token'
