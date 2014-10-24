@@ -3,7 +3,7 @@ module Timesheet
     CLIENTS_URI = 'https://www.toggl.com/api/v8/clients'
 
     def create_client(name, workspace_id)
-      options = {
+      params = {
         project: {
           name: name,
           wid: workspace_id,
