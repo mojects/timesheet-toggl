@@ -17,6 +17,7 @@ module Timesheet
         request.http_auth_types = :basic
         request.username = config[:api_token]
         request.password = 'api_token'
+        request.headers = headers
       end
       if response.response_code == 200
         JSON.parse(response.body, symbolize_names: true)[:data][:id]
