@@ -7,7 +7,6 @@ module Timesheet
         project: {
           name: name,
           wid: workspace_id,
-          cid: client_id
         }
       }
       response = Curl.post(PROJECTS_URI, params) do |request|
