@@ -4,7 +4,7 @@ module Timesheet
 
     def create_client(name, workspace_id)
       params = {
-        project: {
+        client: {
           name: name,
           wid: workspace_id,
         }
@@ -17,7 +17,7 @@ module Timesheet
       if response.response_code == 200
         JSON.parse(response.body, symbolize_names: true)[:data][:id]
       else
-        Rails.logger.error "Project creation failed: #{response.body}"
+        Rails.logger.error "Client creation failed: #{response.body}"
       end
     end
   end
