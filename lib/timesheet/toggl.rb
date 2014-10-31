@@ -1,6 +1,7 @@
 require_relative 'toggl/version'
 require_relative 'toggl/clients'
 require_relative 'toggl/projects'
+require_relative 'toggl/parser'
 require 'curb'
 require 'active_support/core_ext/time'
 require 'active_support/core_ext/date'
@@ -99,57 +100,7 @@ module Timesheet
     # Don't push time entry if no user set.
     #
     def push_record(record)
-      params = derive_params(record)
-      return unless params[:user_id]
-      te = TimeEntry.find_or_create_by(
-        external_id: record[:id], data_source_id: config[:source_id])
-      te.update params
-    end
-
-    def derive_params(record)
-      params = record.reduce({}) do |r, (k, v)|
-        next(r) unless params_map[k]
-        r.merge(params_map[k] => v)
-      end
-      params[:data_source_id] = config[:source_id]
-      params[:spent_on] = record[:start].to_date
-      params[:hours] /= 3_600_000.0 # turn milliseconds into hours
-      if config[:redmine_time_entry_class]
-        if issue_id = params[:comment].match(/\#(\d+)/).try(:[], 1)
-          time_entry_class = Kernel.const_get(config[:redmine_time_entry_class])
-          project_id         = time_entry_class.issue_class.find(issue_id).project_id
-          params[:project]   = time_entry_class.project(project_id)
-          params[:task]      = time_entry_class.task(issue_id)
-          params[:client_id] = time_entry_class.client_id(issue_id)
-        end
-      end
-      unless params[:client_id]
-        if client = Client.find_by(name: record[:client])
-          params[:client_id] = client.id
-        else
-          Rails.logger.error "No client match to toggl client #{record[:client]}"
-        end
-      end
-      data_source_user = DataSourceUser.find_by(
-        data_source_id: config[:source_id], external_user_id: record[:uid])
-      if data_source_user
-        params[:user_id] = data_source_user.user_id
-      else
-        Rails.logger.error "No user match to toggl user
-          #{record[:user]} (id #{record[:uid]})"
-      end
-      params
-    end
-
-    def params_map
-      {
-        id: :external_id,
-        project: :project,
-        description: :comment,
-        dur: :hours,
-        start: :start_time,
-        end: :finish_time
-      }
+      params = TogglRecord.new(record, config).push
     end
   end
 end
