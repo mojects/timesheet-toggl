@@ -1,5 +1,4 @@
 module Timesheet
-  # TODO:
   # get issue id
   #   issue-related params
   # get project
@@ -41,7 +40,16 @@ module Timesheet
 
     def descriptions_params
       params = derive_params
-      @descriptions.map { |x| params.merge(comment: x) }
+      time_proc = proc { |x| x.scan(/@\s?(\d+)/).flatten.first.to_i }
+      times = @descriptions.map(&time_proc).reject(&:zero?)
+      one_part = (times.size / descriptions.size.to_f) * params[:hours] / times.sum
+      @descriptions.map do |x|
+        time = time_proc.call(x)
+        hours = time.zero? ?
+          (params[:hours] / @descriptions.size) :
+          (one_part * time)
+        params.merge(comment: x, hours: hours)
+      end
     end
 
     def derive_params
