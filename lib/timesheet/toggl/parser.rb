@@ -29,7 +29,7 @@ module Timesheet
         TimeEntry
           .where(external_id: record[:id], data_source_id: config[:source_id])
           .each { |x| x.delete_from_kibana; x.delete }
-        params.each { |x| TimeEntry.create x }
+        params.each { |x| return unless x[:user_id]; TimeEntry.create x }
       else
         params = params.first
         return unless params[:user_id]
