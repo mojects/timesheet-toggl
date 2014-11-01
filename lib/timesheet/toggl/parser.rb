@@ -13,7 +13,7 @@ module Timesheet
     attr_accessor :record, :config
 
     def initialize(hash, config)
-      @descriptions = parse_description hash[:comment]
+      @descriptions = parse_description hash[:description]
       @record = hash
       @config = config
     end
