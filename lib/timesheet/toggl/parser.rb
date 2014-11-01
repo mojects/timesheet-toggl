@@ -19,8 +19,8 @@ module Timesheet
     end
 
     def parse_description(description)
-      result = description.scan(/(#\s?\d+[^#]+)/)
-      result.empty? ? [description] : result
+      result = description.scan(/(#\s?\d+[^#]+)/).flatten
+      result.size < 2 ? [description] : result
     end
 
     def push
@@ -31,6 +31,7 @@ module Timesheet
           .each { |x| x.delete_from_kibana; x.delete }
         params.each { |x| TimeEntry.create x }
       else
+        params = params.first
         return unless params[:user_id]
         te = TimeEntry.find_or_create_by(
           external_id: record[:id], data_source_id: config[:source_id])
@@ -42,7 +43,7 @@ module Timesheet
       params = derive_params
       time_proc = proc { |x| x.scan(/@\s?(\d+)/).flatten.first.to_i }
       times = @descriptions.map(&time_proc).reject(&:zero?)
-      one_part = (times.size / descriptions.size.to_f) * params[:hours] / times.sum
+      one_part = (times.size / @descriptions.size.to_f) * params[:hours] / times.sum
       @descriptions.map do |x|
         time = time_proc.call(x)
         hours = time.zero? ?
