@@ -61,6 +61,7 @@ module Timesheet
       end
       params[:data_source_id] = config[:source_id]
       params[:spent_on] = record[:start].to_date
+      params[:user_id = user_id
       params[:hours] /= 3_600_000.0 # turn milliseconds into hours
       if iid = issue_id(params)
         params.merge!(issue_related_params(iid))
