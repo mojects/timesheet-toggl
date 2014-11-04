@@ -25,6 +25,7 @@ module Timesheet
 
     def push
       params = descriptions_params
+      p params
       if params.size > 1
         TimeEntry
           .where(external_id: record[:id], data_source_id: config[:source_id])
