@@ -57,9 +57,8 @@ module Timesheet
         user_agent: 'export_to_timesheet'
       }
       params[:user_ids] = user_ids.join(',') unless user_ids.empty?
-      first_page = fetch(params, 1)
+      p first_page = fetch(params, 1)
       push(first_page)
-      p first_page[:total_count]
       pages = first_page[:total_count] / first_page[:per_page]
       pages.times { |page| sync(params, page + 2) }
     end
