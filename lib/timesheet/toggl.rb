@@ -6,6 +6,7 @@ require 'curb'
 require 'active_support/core_ext/time'
 require 'active_support/core_ext/date'
 require 'json'
+require 'pp'
 
 module Timesheet
   # Export reports from timesheet to toggle.
@@ -57,7 +58,7 @@ module Timesheet
         user_agent: 'export_to_timesheet'
       }
       params[:user_ids] = user_ids.join(',') unless user_ids.empty?
-      p first_page = fetch(params, 1)
+      pp first_page = fetch(params, 1)
       push(first_page)
       pages = first_page[:total_count] / first_page[:per_page]
       pages.times { |page| sync(params, page + 2) }
