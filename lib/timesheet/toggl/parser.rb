@@ -88,7 +88,11 @@ module Timesheet
 
     def issue_related_params(issue_id)
       time_entry_class = Kernel.const_get(config[:redmine_time_entry_class])
-      project_id = time_entry_class.issue_class.find(issue_id).project_id rescue return {}
+      begin
+        project_id = time_entry_class.issue_class.find(issue_id).project_id
+      rescue
+        return {}
+      end
       company = time_entry_class.issue_company(issue_id)
       {
         project: time_entry_class.project(project_id),
