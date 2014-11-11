@@ -50,7 +50,7 @@ module Timesheet
         hours = time.zero? ?
           (params[:hours] / @descriptions.size) :
           (one_part * time)
-        iid = issue_id(x)
+        iid = issue_id(comment: x)
         params.merge(comment: x, hours: hours).merge(issue_related_params(iid))
       end
     end
