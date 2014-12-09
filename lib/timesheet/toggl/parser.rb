@@ -25,7 +25,6 @@ module Timesheet
 
     def push
       params = descriptions_params
-      p params
       if params.size > 1
         TimeEntry
           .where(external_id: record[:id], data_source_id: config[:source_id])
@@ -95,6 +94,7 @@ module Timesheet
         return {}
       end
       company = time_entry_class.issue_company(issue_id)
+      company = project_company(project_id) if (!company || company.empty?)
       {
         project: time_entry_class.project(project_id),
         task: time_entry_class.task(issue_id),

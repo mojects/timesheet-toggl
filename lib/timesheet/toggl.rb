@@ -50,6 +50,8 @@ module Timesheet
     #   until=2013-05-20&
     #   user_agent=api_test"
     #
+    # @return array of time entries' ids
+    #
     def synchronize(from, to, user_ids = [])
       params = {
         workspace_id: config[:workspace_id],
@@ -58,10 +60,10 @@ module Timesheet
         user_agent: 'export_to_timesheet'
       }
       params[:user_ids] = user_ids.join(',') unless user_ids.empty?
-      pp first_page = fetch(params, 1)
-      push(first_page)
+      first_page = fetch(params, 1)
+      te_ids = push(first_page)
       pages = first_page[:total_count] / first_page[:per_page]
-      pages.times { |page| sync(params, page + 2) }
+      pages.times.map { |page| sync(params, page + 2) }.flatten + te_ids
     end
 
     # Since toggl has per-page api, we will follow them.
@@ -93,7 +95,7 @@ module Timesheet
     #
     def push(parsed_response)
       TimeEntry.transaction do
-        parsed_response[:data].each { |x| push_record x }
+        parsed_response[:data].map { |x| push_record x }
       end
     end
 
@@ -102,6 +104,7 @@ module Timesheet
     #
     def push_record(record)
       params = TogglRecord.new(record, config).push
+      record[:id]
     end
   end
 end
