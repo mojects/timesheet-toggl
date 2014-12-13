@@ -94,7 +94,7 @@ module Timesheet
         return {}
       end
       company = time_entry_class.issue_company(issue_id)
-      company = project_company(project_id) if (!company || company.empty?)
+      company = time_entry_class.project_company(project_id) if (!company || company.empty?)
       {
         project: time_entry_class.project(project_id),
         task: time_entry_class.task(issue_id),
