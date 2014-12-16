@@ -93,12 +93,17 @@ module Timesheet
       rescue
         return {}
       end
-      company = time_entry_class.issue_company(issue_id)
-      company = time_entry_class.project_company(project_id) if (!company || company.empty?)
+      project_company = time_entry_class.project_company(project_id)
+      issue_company = time_entry_class.issue_company(issue_id)
+      company = issue_company.empty? ? project_company : issue_company
+      alert = time_entry_class.alert? project_company, issue_company
       {
         project: time_entry_class.project(project_id),
         task: time_entry_class.task(issue_id),
-        client_id: time_entry_class.client_id(company)
+        client_id: time_entry_class.client_id(company),
+        project_company: project_company,
+        issue_company: issue_company,
+        alert: alert
       }
     end
 
