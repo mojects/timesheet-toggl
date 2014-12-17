@@ -24,7 +24,7 @@ module Timesheet
     end
 
     def push
-      params = descriptions_params
+      return unless params = descriptions_params
       if params.size > 1
         TimeEntry
           .where(external_id: record[:id], data_source_id: config[:source_id])
@@ -40,7 +40,7 @@ module Timesheet
     end
 
     def descriptions_params
-      params = derive_params
+      return unless params = derive_params
       time_proc = proc { |x| x.scan(/@\s?(\d+)/).flatten.first.to_i }
       times = @descriptions.map(&time_proc).reject(&:zero?)
       one_part = (times.size / @descriptions.size.to_f) * params[:hours] / times.sum
@@ -62,6 +62,7 @@ module Timesheet
       params[:data_source_id] = config[:source_id]
       params[:spent_on] = record[:start].to_date
       params[:user_id] = user_id
+      return unless params[:user_id]
       params[:hours] /= 3_600_000.0 # turn milliseconds into hours
       if iid = issue_id(params)
         params.merge!(issue_related_params(iid))
