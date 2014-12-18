@@ -68,9 +68,6 @@ module Timesheet
         params.merge!(issue_related_params(iid))
       end
       params[:client_id] ||= client_id
-      if company = User.find(params[:user_id]).company
-        params[:client_id] = Client.find_by(company: company).id
-      end
       params
     end
 
