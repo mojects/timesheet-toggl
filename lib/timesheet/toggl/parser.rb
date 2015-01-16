@@ -11,6 +11,7 @@ module Timesheet
   # @time_part
   class TogglRecord
     attr_accessor :record, :config
+    Time.zone = 'UTC' # not to corrupt start_time and end_time
 
     def initialize(hash, config)
       @descriptions = parse_description hash[:description]
@@ -60,7 +61,7 @@ module Timesheet
         r.merge(params_map[k] => v)
       end
       params[:data_source_id] = config[:source_id]
-      params[:spent_on] = record[:start].to_date
+      params[:spent_on] = record[:start]
       params[:user_id] = user_id
       return unless params[:user_id]
       params[:hours] /= 3_600_000.0 # turn milliseconds into hours
