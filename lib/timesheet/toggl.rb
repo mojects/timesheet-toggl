@@ -86,7 +86,7 @@ module Timesheet
         request.password = 'api_token'
       end
       parsed = JSON.parse(response.body, symbolize_names: true)
-      fail "Request failed: #{parsed}" unless response.response_code == 200
+      fail "Request failed: #{parsed} with params #{params}" unless response.response_code == 200
       parsed
     end
 

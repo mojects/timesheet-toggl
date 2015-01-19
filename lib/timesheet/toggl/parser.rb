@@ -36,7 +36,7 @@ module Timesheet
         return unless params[:user_id]
         te = TimeEntry.find_or_create_by(
           external_id: record[:id], data_source_id: config[:source_id])
-        p te.update params
+        te.update params
       end
     end
 
