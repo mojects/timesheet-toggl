@@ -9,6 +9,7 @@ module Timesheet
   #     delete time entries from kibana
   #     add new time entries to timesheet
   # @time_part
+  #
   class TogglRecord
     attr_accessor :record, :config
     Time.zone = 'UTC' # not to corrupt start_time and end_time
