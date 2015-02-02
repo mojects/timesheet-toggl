@@ -1,12 +1,12 @@
-require_relative 'toggl/version'
-require_relative 'toggl/clients'
-require_relative 'toggl/projects'
-require_relative 'toggl/parser'
 require 'curb'
 require 'active_support/core_ext/time'
 require 'active_support/core_ext/date'
 require 'json'
 require 'pp'
+require_relative 'toggl/version'
+require_relative 'toggl/clients'
+require_relative 'toggl/projects'
+require_relative 'toggl/parser'
 
 module Timesheet
   # Export reports from timesheet to toggle.

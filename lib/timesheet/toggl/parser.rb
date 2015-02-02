@@ -11,13 +11,15 @@ module Timesheet
   # @time_part
   #
   class TogglRecord
-    attr_accessor :record, :config
+    attr_accessor :record, :config, :time_entry_class
     Time.zone = 'UTC' # not to corrupt start_time and end_time
 
     def initialize(hash, config)
       @descriptions = parse_description hash[:description]
       @record = hash
       @config = config
+      return unless tec = config[:redmine_time_entry_class]
+      @time_entry_class = Kernel.const_get tec
     end
 
     def parse_description(description)
@@ -28,13 +30,14 @@ module Timesheet
     def push
       return unless params = descriptions_params
       if params.size > 1
+        # TODO: add method to TimeEntry to do it
         TimeEntry
           .where(external_id: record[:id], data_source_id: config[:source_id])
           .each { |x| x.delete_from_kibana; x.delete }
-        params.each { |x| return unless x[:user_id]; TimeEntry.create x }
+        params.each { |x| TimeEntry.create x }
       else
         params = params.first
-        return unless params[:user_id]
+        # TODO: add method to TimeEntry to do it
         te = TimeEntry.find_or_create_by(
           external_id: record[:id], data_source_id: config[:source_id])
         te.update params
@@ -42,35 +45,53 @@ module Timesheet
     end
 
     def descriptions_params
-      return unless params = derive_params
-      time_proc = proc { |x| x.scan(/@\s?(\d+)/).flatten.first.to_i }
-      times = @descriptions.map(&time_proc).reject(&:zero?)
-      one_part = (times.size / @descriptions.size.to_f) * params[:hours] / times.sum
-      @descriptions.map do |x|
-        time = time_proc.call(x)
-        hours = time.zero? ?
-          (params[:hours] / @descriptions.size) :
-          (one_part * time)
-        iid = issue_id(comment: x)
-        params.merge(comment: x, hours: hours).merge(issue_related_params(iid))
+      return unless params = common_params
+      descriptions_with_hours(params[:hours]).map do |k, v|
+        params.merge(comment: k, hours: v).merge(issue_related_params(comment: k))
       end
     end
 
-    def derive_params
-      params = record.reduce({}) do |r, (k, v)|
-        next(r) unless params_map[k]
-        r.merge(params_map[k] => v)
+    # description without @hours gets 1/n of all time, where n is count of descriptions.
+    #
+    def descriptions_with_hours(total_hours)
+      d = descriptions_with_time_parts
+      times = d.values.reject(&:zero?)
+      one_part = (times.size / d.size.to_f) * total_hours / times.inject(&:+)
+      d.inject({}) do |r, (k, v)|
+        r.merge(k => (v.zero? ? (total_hours / d.size) : (one_part * v)))
       end
-      params[:data_source_id] = config[:source_id]
-      params[:spent_on] = record[:start]
-      params[:user_id] = user_id
-      return unless params[:user_id]
-      params[:hours] /= 3_600_000.0 # turn milliseconds into hours
-      if iid = issue_id(params)
-        params.merge!(issue_related_params(iid))
+    end
+
+    def descriptions_with_time_parts
+      @descriptions.inject({}) do |r, x|
+        r.merge(x => time_parts(x))
       end
-      params[:client_id] ||= client_id
-      params
+    end
+
+    def time_parts(description)
+      description.scan(/@\s?(\d+)/).flatten.first.to_i
+    end
+
+    def common_params
+      return unless user_id
+      p = map_params
+      p.merge derived_params(p)
+    end
+
+    def derived_params(params)
+      {
+        data_source_id: config[:source_id],
+        spent_on: record[:start],
+        hours: params[:hours] / 3_600_000.0,
+        client_id: params[:client_id] || client_id
+      }
+    end
+
+    def map_params
+      record.reduce({}) do |r, (k, v)|
+        next(r) unless x = params_map[k]
+        r.merge(x => v)
+      end
     end
 
     def params_map
@@ -84,25 +105,16 @@ module Timesheet
       }
     end
 
-    def issue_id(params)
-      return unless config[:redmine_time_entry_class]
-      params[:comment].match(/#\s?(\d+)/).try(:[], 1)
-    end
-
-    def issue_related_params(issue_id)
-      time_entry_class = Kernel.const_get(config[:redmine_time_entry_class])
-      begin
-        project_id = time_entry_class.issue_class.find(issue_id).project_id
-      rescue
-        return {}
-      end
+    def issue_related_params(params)
+      return {} unless iid = issue_id(params)
+      return {} unless project_id = time_entry_class.project_id_for(iid)
       project_company = time_entry_class.project_company(project_id)
-      issue_company = time_entry_class.issue_company(issue_id)
+      issue_company = time_entry_class.issue_company(iid)
       company = issue_company.empty? ? project_company : issue_company
       alert = time_entry_class.alert? project_company, issue_company
       {
         project: time_entry_class.project(project_id),
-        task: time_entry_class.task(issue_id),
+        task: time_entry_class.task(iid),
         client_id: time_entry_class.client_id(company),
         project_company: project_company,
         issue_company: issue_company,
@@ -110,21 +122,17 @@ module Timesheet
       }
     end
 
+    def issue_id(params)
+      return unless time_entry_class
+      params[:comment].match(/#\s?(\d+)/).try(:[], 1).try(:to_i)
+    end
+
     def client_id
-      if client = Client.find_by(name: record[:client])
-        client_id = client.id
-      else
-        Rails.logger.error "No client match to toggl client #{record[:client]}"
-      end
-      client_id
+      Client.id_by_name record[:client]
     end
 
     def user_id
-      data_source_user = DataSourceUser.find_by(
-        data_source_id: config[:source_id], external_user_id: record[:uid])
-      error = "No user match to toggl user #{record[:user]} (id #{record[:uid]})"
-      (Rails.logger.error(error); return) unless data_source_user
-      data_source_user.user_id
+      DataSourceUser.user_id_for config[:source_id], record[:uid]
     end
   end
 end

@@ -1,0 +1,40 @@
+---
+- :external_id: 43669578
+  :comment: "#1483 @ 2 one; "
+  :start_time: '2013-05-20T06:55:04'
+  :finish_time: '2013-05-20T10:55:04'
+  :hours: 1.7777777777777777
+  :project: Help Doctor
+  :data_source_id: 4
+  :spent_on: '2013-05-20T06:55:04'
+  :client_id: 28
+  :task: Time paradoxes
+  :project_company: Silence Inc
+  :issue_company: Tardis Inc
+  :alert: false
+- :external_id: 43669578
+  :comment: "#1231 two; "
+  :start_time: '2013-05-20T06:55:04'
+  :finish_time: '2013-05-20T10:55:04'
+  :hours: 1.3333333333333333
+  :project: Help Doctor
+  :data_source_id: 4
+  :spent_on: '2013-05-20T06:55:04'
+  :client_id: 28
+  :task: Time paradoxes
+  :project_company: Tardis Inc
+  :issue_company: Tardis Inc
+  :alert: false
+- :external_id: 43669578
+  :comment: "#1332 @1 smooth criminal"
+  :start_time: '2013-05-20T06:55:04'
+  :finish_time: '2013-05-20T10:55:04'
+  :hours: 0.8888888888888888
+  :project: Help Doctor
+  :data_source_id: 4
+  :spent_on: '2013-05-20T06:55:04'
+  :client_id: 28
+  :task: Time paradoxes
+  :project_company: Dalek Inc
+  :issue_company: Tardis Inc
+  :alert: false

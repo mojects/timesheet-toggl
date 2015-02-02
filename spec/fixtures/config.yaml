@@ -1,0 +1,7 @@
+---
+:id: 3
+:api_token: a45a2528a289f60aabc09e8bee7709c2
+:workspace_id: '133791'
+:redmine_time_entry_class: TimeEntryRedmine
+:source_name: toggl
+:source_id: 4
