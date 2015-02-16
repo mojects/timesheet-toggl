@@ -176,13 +176,15 @@ describe Timesheet::TogglRecord do
     context 'we got one record to insert' do
       it 'does nothing if no user_id for record' do
         allow(record).to receive(:descriptions_params)
-          .and_return [fixture('descriptions_params_result_1', :yaml).first.merge(user_id: nil)]
+          .and_return nil
         expect(record.push).to be_nil
       end
       it 'updates params otherwise' do
         allow(record).to receive(:descriptions_params)
-          .and_return [fixture('descriptions_params_result_1', :yaml).first.merge(user_id: nil)]
-        expect(record.push).to eq 'wtf?'
+          .and_return [fixture('descriptions_params_result_1', :yaml).first]
+        allow(TimeEntry).to receive(:create_or_update)
+          .and_return true
+        expect(record.push).to eq true
       end
     end
 
@@ -191,7 +193,13 @@ describe Timesheet::TogglRecord do
         allow(DataSourceUser).to receive(:user_id_for).and_return nil
         expect(record.push).to be_nil
       end
-      it 'delete records from kibana and timesheet and create new with that params otherwise'
+      it 'delete records from kibana and timesheet and create new with that params otherwise' do
+        allow(record).to receive(:descriptions_params)
+          .and_return [fixture('descriptions_params_result_1', :yaml)] * 2
+        allow(TimeEntry).to receive(:recreate)
+          .and_return true
+        expect(record.push).to eq true
+      end
     end
   end
 end

@@ -30,17 +30,9 @@ module Timesheet
     def push
       return unless params = descriptions_params
       if params.size > 1
-        # TODO: add method to TimeEntry to do it
-        TimeEntry
-          .where(external_id: record[:id], data_source_id: config[:source_id])
-          .each { |x| x.delete_from_kibana; x.delete }
-        params.each { |x| TimeEntry.create x }
+        TimeEntry.recreate(record[:id], config[:source_id], params)
       else
-        params = params.first
-        # TODO: add method to TimeEntry to do it
-        te = TimeEntry.find_or_create_by(
-          external_id: record[:id], data_source_id: config[:source_id])
-        te.update params
+        TimeEntry.create_or_update(record[:id], config[:source_id], params.first)
       end
     end
 
