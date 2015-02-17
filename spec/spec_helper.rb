@@ -13,6 +13,7 @@ class Logger; def self.error(*params); true; end; end
 class Client; end
 class TimeEntryRedmine; end
 class TimeEntry; end
+class DataSource; end
 class DataSourceUser; end
 
 def fixture(name, format = :json, parse = true)

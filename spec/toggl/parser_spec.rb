@@ -116,31 +116,21 @@ describe Timesheet::TogglRecord do
     end
 
     it 'Returns empty hash if no time entry redmine class' do
-      allow(record).to receive(:time_entry_class).and_return nil
-      expect(record.issue_related_params({})).to eq({})
-    end
-
-    it 'Returns empty hash if no time entry redmine class' do
-      allow(record).to receive(:issue_id).and_return 14
-      allow(TimeEntryRedmine).to receive(:project_id_for).and_return nil
-      expect(record.issue_related_params({})).to eq({})
+      allow(DataSource).to receive(:time_entry_class).and_return nil
+      expect(record.issue_related_params({comment: '#1337 hi'})).to eq({})
     end
 
     it 'derives issue related params from redmine' do
-      allow(TimeEntryRedmine).to receive(:project_id_for).and_return 98
-      allow(TimeEntryRedmine).to receive(:project_company).and_return 'Tardis Inc'
-      allow(TimeEntryRedmine).to receive(:issue_company).and_return 'Tardis Inc'
-      allow(TimeEntryRedmine).to receive(:alert?).and_return false
-      allow(TimeEntryRedmine).to receive(:project).and_return 'Help Doctor'
-      allow(TimeEntryRedmine).to receive(:task).and_return 'Time paradoxes'
-      allow(TimeEntryRedmine).to receive(:client_id).and_return 28
+      allow(DataSource).to receive(:time_entry_class).and_return TimeEntryRedmine
+      response = { project: 'Help Doctor',
+                   task: 'Time paradoxes',
+                   client_id: 28,
+                   project_company: 'Tardis Inc',
+                   issue_company: 'Tardis Inc',
+                   alert: false }
+      allow(TimeEntryRedmine).to receive(:issue_related_params).and_return response
       expect(record.issue_related_params({comment: '#134 hey there'}))
-        .to eq(project: 'Help Doctor',
-               task: 'Time paradoxes',
-               client_id: 28,
-               project_company: 'Tardis Inc',
-               issue_company: 'Tardis Inc',
-               alert: false)
+        .to eq response
     end
   end
 
@@ -150,22 +140,23 @@ describe Timesheet::TogglRecord do
       expect(record.descriptions_params).to eq nil
     end
 
-    it 'merge common params with description, hours and issue_related_params' do
-      allow(DataSourceUser).to receive(:user_id_for).and_return 42
-      allow(Client).to receive(:id_by_name).and_return 14
-      allow(TimeEntryRedmine).to receive(:project_id_for).with(1332).and_return 13
-      allow(TimeEntryRedmine).to receive(:project_id_for).with(1483).and_return 14
-      allow(TimeEntryRedmine).to receive(:project_id_for).with(1231).and_return 12
-      allow(TimeEntryRedmine).to receive(:project_company).with(12).and_return 'Tardis Inc'
-      allow(TimeEntryRedmine).to receive(:project_company).with(13).and_return 'Dalek Inc'
-      allow(TimeEntryRedmine).to receive(:project_company).with(14).and_return 'Silence Inc'
-      allow(TimeEntryRedmine).to receive(:issue_company).and_return 'Tardis Inc'
-      allow(TimeEntryRedmine).to receive(:alert?).and_return false
-      allow(TimeEntryRedmine).to receive(:project).and_return 'Help Doctor'
-      allow(TimeEntryRedmine).to receive(:task).and_return 'Time paradoxes'
-      allow(TimeEntryRedmine).to receive(:client_id).and_return 28
-      expect(record.descriptions_params).to eq fixture('descriptions_params_result_1', :yaml)
-    end
+    # TODO: move that test to time entry connector spec
+    # it 'merge common params with description, hours and issue_related_params' do
+    #   allow(DataSourceUser).to receive(:user_id_for).and_return 42
+    #   allow(Client).to receive(:id_by_name).and_return 14
+    #   allow(TimeEntryRedmine).to receive(:project_id_for).with(1332).and_return 13
+    #   allow(TimeEntryRedmine).to receive(:project_id_for).with(1483).and_return 14
+    #   allow(TimeEntryRedmine).to receive(:project_id_for).with(1231).and_return 12
+    #   allow(TimeEntryRedmine).to receive(:project_company).with(12).and_return 'Tardis Inc'
+    #   allow(TimeEntryRedmine).to receive(:project_company).with(13).and_return 'Dalek Inc'
+    #   allow(TimeEntryRedmine).to receive(:project_company).with(14).and_return 'Silence Inc'
+    #   allow(TimeEntryRedmine).to receive(:issue_company).and_return 'Tardis Inc'
+    #   allow(TimeEntryRedmine).to receive(:alert?).and_return false
+    #   allow(TimeEntryRedmine).to receive(:project).and_return 'Help Doctor'
+    #   allow(TimeEntryRedmine).to receive(:task).and_return 'Time paradoxes'
+    #   allow(TimeEntryRedmine).to receive(:client_id).and_return 28
+    #   expect(record.descriptions_params).to eq fixture('descriptions_params_result_1', :yaml)
+    # end
   end
 
   context '#push' do

@@ -99,19 +99,8 @@ module Timesheet
 
     def issue_related_params(params)
       return {} unless iid = issue_id(params)
-      return {} unless project_id = time_entry_class.project_id_for(iid)
-      project_company = time_entry_class.project_company(project_id)
-      issue_company = time_entry_class.issue_company(iid)
-      company = issue_company.empty? ? project_company : issue_company
-      alert = time_entry_class.alert? project_company, issue_company
-      {
-        project: time_entry_class.project(project_id),
-        task: time_entry_class.task(iid),
-        client_id: time_entry_class.client_id(company),
-        project_company: project_company,
-        issue_company: issue_company,
-        alert: alert
-      }
+      return {} unless time_entry_class = DataSource.time_entry_class(iid)
+      time_entry_class.issue_related_params(iid)
     end
 
     def issue_id(params)
