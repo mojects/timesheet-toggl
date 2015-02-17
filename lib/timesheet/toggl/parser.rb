@@ -48,7 +48,11 @@ module Timesheet
     def descriptions_with_hours(total_hours)
       d = descriptions_with_time_parts
       times = d.values.reject(&:zero?)
-      one_part = (times.size / d.size.to_f) * total_hours / times.inject(&:+)
+      if times.empty?
+        one_part = 0
+      else
+        one_part = (times.size / d.size.to_f) * total_hours / times.inject(&:+)
+      end
       d.inject({}) do |r, (k, v)|
         r.merge(k => (v.zero? ? (total_hours / d.size) : (one_part * v)))
       end
