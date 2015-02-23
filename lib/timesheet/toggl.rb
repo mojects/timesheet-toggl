@@ -35,6 +35,8 @@ module Timesheet
       src = DataSource.create_with(name: name).
         find_or_create_by(config_section_id: name, connector_type: 'toggl')
       @config[:source_id] = src.id
+      @config[:projects] = projects_with_clients(config[:api_token],
+                                                 config[:workspace_id])
     end
 
     def sync_last_month(user_ids = [])

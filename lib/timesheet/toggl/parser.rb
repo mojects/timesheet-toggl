@@ -102,9 +102,21 @@ module Timesheet
     end
 
     def issue_related_params(params)
-      return {} unless iid = issue_id(params)
-      return {} unless time_entry_class = DataSource.time_entry_class(iid)
-      time_entry_class.issue_related_params(iid)
+      if iid = issue_id(params)
+        return {} unless time_entry_class = DataSource.time_entry_class(iid)
+        time_entry_class.issue_related_params(iid)
+      elsif pname = project_name(params)
+        if client_name = config[:projects][pname]
+          { project: pname, client_id: client_id(client_name) }
+        end
+        # TODO: check projects from redmine
+      else
+        {}
+      end
+    end
+
+    def project_name(params)
+      params[:comment].match(/#\s?(\S+)/).try(:[], 1)
     end
 
     def issue_id(params)

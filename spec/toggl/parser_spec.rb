@@ -23,6 +23,23 @@ describe Timesheet::TogglRecord do
     end
   end
 
+  context '#project_name' do
+    it 'return nil if no #<project_name> in comment' do
+      params = { comment: '1382 Alonsee!' }
+      expect(record.project_name params).to be_nil
+    end
+
+    it 'return id if it is given' do
+      params = { comment: '#bang Alonsee!' }
+      expect(record.project_name params).to eq 'bang'
+    end
+
+    it 'allows space between # and number' do
+      params = { comment: '# bang Alonsee!' }
+      expect(record.project_name params).to eq 'bang'
+    end
+  end
+
   context '#issue_id' do
     it 'don\'t work if no redmine time entry class in config' do
       record = Timesheet::TogglRecord.new({ description: 'hello' }, {})
@@ -110,8 +127,9 @@ describe Timesheet::TogglRecord do
   end
 
   context '#issue_related_params' do
-    it 'Returns empty hash if no issue id in description' do
+    it 'Returns empty hash if neither issue id nor project name in description' do
       allow(record).to receive(:issue_id).and_return nil
+      allow(record).to receive(:project_name).and_return nil
       expect(record.issue_related_params({})).to eq({})
     end
 
