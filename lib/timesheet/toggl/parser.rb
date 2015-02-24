@@ -108,6 +108,8 @@ module Timesheet
       elsif pname = project_name(params)
         if client_name = config[:projects][pname.downcase]
           { project: pname, client_id: client_id(client_name) }
+        else
+          {}
         end
         # TODO: check projects from redmine
       else
