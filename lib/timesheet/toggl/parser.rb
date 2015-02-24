@@ -69,8 +69,8 @@ module Timesheet
     end
 
     def common_params
-      return unless user_id
-      p = map_params
+      return unless uid = user_id
+      p = map_params.merge(user_id: uid)
       p.merge derived_params(p)
     end
 
