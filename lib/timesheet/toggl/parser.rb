@@ -106,7 +106,7 @@ module Timesheet
         return {} unless time_entry_class = DataSource.time_entry_class(iid)
         time_entry_class.issue_related_params(iid)
       elsif pname = project_name(params)
-        if client_name = config[:projects][pname.downcase]
+        if client_name = config[:projects][pname.underscore.gsub(/[^a-zA-z]/, '_')]
           { project: pname, client_id: client_id(client_name) }
         else
           {}
