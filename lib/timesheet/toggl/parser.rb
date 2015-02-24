@@ -126,8 +126,8 @@ module Timesheet
       params[:comment].match(/#\s?(\d+)/).try(:[], 1).try(:to_i)
     end
 
-    def client_id
-      Client.id_by_name record[:client]
+    def client_id(name = nil)
+      Client.id_by_name (name || record[:client])
     end
 
     def user_id
