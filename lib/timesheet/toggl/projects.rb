@@ -29,7 +29,7 @@ module Timesheet
       clients_hash = clients(token, workspace_id)
       projects(token, workspace_id).reduce({}) do |a, e|
         cname = clients_hash.detect { |x| x[:id] == e[:cid] }.try(:[], :name)
-        a.merge(e[:name] => cname)
+        a.merge(e[:name].downcase => cname)
       end
     end
 
