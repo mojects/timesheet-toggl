@@ -23,7 +23,7 @@ module Timesheet
     end
 
     def parse_description(description)
-      result = description.scan(/(#\s?\d+[^#]+)/).flatten
+      result = description.scan(/(#\s?\S+[^#]+)/).flatten
       result.size < 2 ? [description] : result
     end
 
