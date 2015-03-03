@@ -113,7 +113,7 @@ module Timesheet
           TimeEntryConnector.company_by_project_name(normalized_pname)
         return {} unless client_name
         { project: pname, client_id: client_id(client_name) }
-      elsif pname = params[:project]
+      elsif pname = record[:project]
         { project: pname, client_id: client_id }
       else
         {}
