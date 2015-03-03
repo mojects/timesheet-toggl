@@ -39,7 +39,8 @@ module Timesheet
     def descriptions_params
       return unless params = common_params
       descriptions_with_hours(params[:hours]).map do |k, v|
-        params.merge(comment: k, hours: v).merge(issue_related_params(comment: k))
+        params_with_comment = params.merge(comment: k, hours: v)
+        params_with_comment.merge(issue_related_params(params_with_comment))
       end
     end
 
@@ -112,6 +113,8 @@ module Timesheet
           TimeEntryConnector.company_by_project_name(normalized_pname)
         return {} unless client_name
         { project: pname, client_id: client_id(client_name) }
+      elsif pname = params[:project]
+        { project: pname, client_id: client_id }
       else
         {}
       end
