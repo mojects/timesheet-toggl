@@ -27,10 +27,10 @@ module Timesheet
 
     def projects_with_clients(token, workspace_id)
       clients_hash = clients(token, workspace_id)
-      projects(token, workspace_id).reduce({}) do |a, e|
-        cname = clients_hash.detect { |x| x[:id] == e[:cid] }.try(:[], :name)
-        pname = e[:name].underscore.gsub(/[^a-zA-z]/, '_')
-        a.merge(pname => cname)
+      projects(token, workspace_id).map do |p|
+        cname = clients_hash.detect { |x| x[:id] == p[:cid] }.try(:[], :name)
+        pname = p[:name].underscore.gsub(/[^a-zA-z]/, '_')
+        { client: cname, project: pname, project_origin: p[:name] }
       end
     end
 

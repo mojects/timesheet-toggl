@@ -108,16 +108,25 @@ module Timesheet
         time_entry_class.issue_related_params(iid)
       elsif pname = project_name(params)
         normalized_pname = pname.underscore.gsub(/[^a-zA-z]/, '_')
-        client_name =
-          config[:projects][normalized_pname] ||
-          TimeEntryConnector.company_by_project_name(normalized_pname)
+        client_name = client_name_by_project normalized_pname
         return {} unless client_name
-        { project: pname, client_id: client_id(client_name) }
+        { project: denormalize_project_name(normalized_pname),
+          client_id: client_id(client_name) }
       elsif pname = record[:project]
         { project: pname, client_id: client_id }
       else
         {}
       end
+    end
+
+    def client_name_by_project(pname)
+      hash = config[:projects].find { |x| x[:project] == pname }
+      hash ? hash[:client] : TimeEntryConnector.company_by_project_name(pname)
+    end
+
+    def denormalize_project_name(normalized)
+      config[:projects].find { |x| x[:project] == normalized }[:project_origin] ||
+        TimeEntryConnector.denormalize_project_name(normalized)
     end
 
     def project_name(params)
