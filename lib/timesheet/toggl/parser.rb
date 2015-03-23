@@ -125,7 +125,7 @@ module Timesheet
     end
 
     def denormalize_project_name(normalized)
-      config[:projects].find { |x| x[:project] == normalized }[:project_origin] ||
+      config[:projects].find { |x| x[:project] == normalized }.try(:[], :project_origin) ||
         TimeEntryConnector.denormalize_project_name(normalized)
     end
 
