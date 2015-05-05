@@ -104,6 +104,7 @@ module Timesheet
 
     def issue_related_params(params)
       if iid = issue_id(params)
+        p iid
         return {} unless time_entry_class = DataSource.time_entry_class(iid)
         time_entry_class.issue_related_params(iid)
       elsif pname = project_name(params)
