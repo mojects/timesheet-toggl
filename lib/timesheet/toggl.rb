@@ -87,9 +87,19 @@ module Timesheet
         request.username = config[:api_token]
         request.password = 'api_token'
       end
-      parsed = JSON.parse(response.body, symbolize_names: true)
+      parsed = parse_json(response.body)
       fail "Request failed: #{parsed} with params #{params}" unless response.response_code == 200
       parsed
+    end
+
+    def parse_json(body)
+      JSON.parse(body, symbolize_names: true)
+    rescue => e
+      Rails.logger.error 'Unable to parse response from toggl'
+      Rails.logger.error 'Response body:'
+      Rails.logger.error body
+      Rails.logger.error '--------------------'
+      raise e
     end
 
     # Push data to timesheet.
