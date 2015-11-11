@@ -43,7 +43,7 @@ module Timesheet
         request.username = token
         request.password = 'api_token'
       end
-      JSON.parse(response.body, symbolize_names: true)
+      parse_body(response.body) || []
     end
 
     # Get clients from toggl
@@ -55,7 +55,7 @@ module Timesheet
         request.username = token
         request.password = 'api_token'
       end
-      JSON.parse(response.body, symbolize_names: true)
+      parse_body(response.body) || []
     end
 
     def workspace_projects_url(workspace_id)
@@ -64,6 +64,10 @@ module Timesheet
 
     def workspace_clients_url(workspace_id)
       "https://www.toggl.com/api/v8/workspaces/#{workspace_id}/clients"
+    end
+
+    def parse_body(body)
+      JSON.parse(body, symbolize_names: true, quirks_mode: true)
     end
   end
 end
